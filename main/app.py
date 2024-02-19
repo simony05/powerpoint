@@ -50,8 +50,6 @@ def main():
     min_detection_confidence = args.min_detection_confidence
     min_tracking_confidence = args.min_tracking_confidence
 
-    use_brect = True
-
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
@@ -103,6 +101,7 @@ def main():
 
     while True:
         fps = cvFpsCalc.get()
+        #print(fps)
 
         # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
@@ -131,8 +130,6 @@ def main():
                 
                 #print(hand_landmarks)
 
-                # Bounding box calculation
-                brect = calc_bounding_rect(debug_image, hand_landmarks)
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
@@ -219,8 +216,8 @@ def main():
             else:
                 # clear list for new swipe if invalid
                 datapoints.clear()
-
-        # Screen reflection #############################################################
+    
+        # Popup window
         cv.imshow('Hand Gesture Recognition', debug_image)
 
     cap.release()
@@ -238,24 +235,6 @@ def select_mode(key, mode):
     if key == 104:  # h
         mode = 2
     return number, mode
-
-
-def calc_bounding_rect(image, landmarks):
-    image_width, image_height = image.shape[1], image.shape[0]
-
-    landmark_array = np.empty((0, 2), int)
-
-    for _, landmark in enumerate(landmarks.landmark):
-        landmark_x = min(int(landmark.x * image_width), image_width - 1)
-        landmark_y = min(int(landmark.y * image_height), image_height - 1)
-
-        landmark_point = [np.array((landmark_x, landmark_y))]
-
-        landmark_array = np.append(landmark_array, landmark_point, axis=0)
-
-    x, y, w, h = cv.boundingRect(landmark_array)
-
-    return [x, y, x + w, y + h]
 
 
 def calc_landmark_list(image, landmarks):
