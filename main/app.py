@@ -170,48 +170,56 @@ def main():
                 middle1 = landmark_list[12]
 
                 if (pointer == 'Pointer'):
-                    pyautogui.moveTo(index1[0], index1[1])
+                    pyautogui.moveTo(index1[0], index1[1], duration = 0.1, tween = pyautogui.easeInOutQuad)
 
                 if (pointer == 'Pointer' and moving == 'Move'):
                     datapoints.append([wrist1, index1, middle1])
 
-                # when swipe is done (no longer pointer and moving)
-                elif (pointer != 'Pointer' or moving != 'Move'):
-                    # swipe is at least 10 frames long
-                    # wrist, index tip, and middle tip at 1st frame and 11th frame are within 50px
-                    if (len(datapoints) > 6):
-                        swipe = True
-                        for i in range(3):
-                            # gives leeway if the start isn't exactly inline
-                            # as long as some part of the swipe is straight it will count
-                            if (abs(datapoints[i][0][1] - datapoints[i+3][0][1]) > 80
-                                or abs(datapoints[i][1][1] - datapoints[i+3][1][1]) > 80
-                                or abs(datapoints[i][2][1] - datapoints[i+3][2][1]) > 80):
-                                swipe = False
-                                break
-                        if swipe is True:
-                            print(len(datapoints))
-                            print('valid')
-                        datapoints.clear()
-                    else:
+                # swipe is at least 10 frames long
+                # wrist, index tip, and middle tip at 1st frame and 11th frame are within 50px
+                if (len(datapoints) > 7):
+                    swipe = True
+                    left = True if (datapoints[0][0][0] > datapoints[7][0][0]) else False 
+                    for i in range(4):
+                        # gives leeway if the start isn't exactly inline
+                        # as long as some part of the swipe is straight it will count
+                        if (abs(datapoints[i][0][1] - datapoints[i+4][0][1]) > 50
+                            or abs(datapoints[i][1][1] - datapoints[i+4][1][1]) > 50
+                            or abs(datapoints[i][2][1] - datapoints[i+4][2][1]) > 50):
+                            swipe = False
+                            break
+                    if swipe is True:
+                        print(len(datapoints))
+                        if left:
+                            print('valid left swipe')
+                        else:
+                            print('valid right swipe')
+                    datapoints.clear()
+                else:
+                    # when swipe is done (no longer pointer and moving)
+                    if (pointer != 'Pointer' or moving != 'Move'):
                         # clear list for new swipe if invalid
                         datapoints.clear()
         else:
             # when no hand is in the frame
             point_history.append([0, 0])
-            if (len(datapoints) > 6):
+            if (len(datapoints) > 7):
                 swipe = True
-                for i in range(3):
+                left = True if (datapoints[0][0][0] > datapoints[6][0][0]) else False 
+                for i in range(4):
                     # gives leeway if the start isn't exactly inline
                     # as long as some part of the swipe is straight it will count
-                    if (abs(datapoints[i][0][1] - datapoints[i+3][0][1]) > 100
-                        or abs(datapoints[i][1][1] - datapoints[i+3][1][1]) > 100
-                        or abs(datapoints[i][2][1] - datapoints[i+3][2][1]) > 100):
+                    if (abs(datapoints[i][0][1] - datapoints[i+4][0][1]) > 50
+                        or abs(datapoints[i][1][1] - datapoints[i+4][1][1]) > 50
+                        or abs(datapoints[i][2][1] - datapoints[i+4][2][1]) > 50):
                         swipe = False
                         break
                 if swipe is True:
                     print(len(datapoints))
-                    print('valid')
+                    if left:
+                        print('valid left swipe')
+                    else:
+                        print('valid right swipe')
                 datapoints.clear()
             else:
                 # clear list for new swipe if invalid
