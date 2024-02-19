@@ -51,7 +51,7 @@ def main():
     min_tracking_confidence = args.min_tracking_confidence
 
     # Camera preparation ###############################################################
-    cap = cv.VideoCapture(cap_device)
+    cap = cv.VideoCapture(0)
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
@@ -98,6 +98,11 @@ def main():
 
     # list to keep track of data points for identifying swiping motion
     datapoints = []
+
+    # counter to make sure clicking motion doesn't double click by making clicks every 2 frames
+    counter = 0
+
+    screenWidth, screenHeight = pyautogui.size()
 
     while True:
         fps = cvFpsCalc.get()
@@ -169,61 +174,50 @@ def main():
                 index1 = landmark_list[8]
                 middle1 = landmark_list[12]
 
+                # for clicking motion, index finger bends down so less pixels
+                indexbase = landmark_list[5]
+
                 if (pointer == 'Pointer'):
                     pyautogui.moveTo(index1[0], index1[1], duration = 0.1, tween = pyautogui.easeInOutQuad)
+                    # index len and dist btwn index base and wrist are abt the same
+                    # when the index is half the length it means finger is bent, clicking motion
+                    if (counter == 4):
+                        if (abs(index1[1] - indexbase[1]) < 0.5 * abs(indexbase[1] - wrist1[1])):
+                            print('clicked')
+                            counter = 0
+                    else:
+                        counter += 1
 
                 if (pointer == 'Pointer' and moving == 'Move'):
                     datapoints.append([wrist1, index1, middle1])
 
-                # swipe is at least 10 frames long
-                # wrist, index tip, and middle tip at 1st frame and 11th frame are within 50px
-                if (len(datapoints) > 7):
+                # swipe must be at least 4 frames long
+                # wrist, index tip, and middle tip at 1st frame and 4th frame are within 50px
+                # x-value distance traveled must be at least .15 of the screen
+                if (len(datapoints) > 3 and abs(datapoints[0][0][0] - datapoints[3][0][0]) > (screenWidth * 0.15)):
                     swipe = True
-                    left = True if (datapoints[0][0][0] > datapoints[7][0][0]) else False 
-                    for i in range(4):
+                    left = True if (datapoints[0][0][0] > datapoints[3][0][0]) else False 
+                    for i in range(2):
                         # gives leeway if the start isn't exactly inline
                         # as long as some part of the swipe is straight it will count
-                        if (abs(datapoints[i][0][1] - datapoints[i+4][0][1]) > 50
-                            or abs(datapoints[i][1][1] - datapoints[i+4][1][1]) > 50
-                            or abs(datapoints[i][2][1] - datapoints[i+4][2][1]) > 50):
+                        if (abs(datapoints[i][0][1] - datapoints[i + 2][0][1]) > (0.1 * screenHeight)
+                            or abs(datapoints[i][1][1] - datapoints[i+ 2][1][1]) > (0.1 * screenHeight)
+                            or abs(datapoints[i][2][1] - datapoints[i + 2][2][1]) > (0.1 * screenHeight)):
                             swipe = False
                             break
                     if swipe is True:
-                        print(len(datapoints))
                         if left:
                             print('valid left swipe')
                         else:
                             print('valid right swipe')
                     datapoints.clear()
                 else:
-                    # when swipe is done (no longer pointer and moving)
-                    if (pointer != 'Pointer' or moving != 'Move'):
-                        # clear list for new swipe if invalid
+                    # swipe failed, restart
+                    if len(datapoints) > 3:
                         datapoints.clear()
         else:
             # when no hand is in the frame
-            point_history.append([0, 0])
-            if (len(datapoints) > 7):
-                swipe = True
-                left = True if (datapoints[0][0][0] > datapoints[6][0][0]) else False 
-                for i in range(4):
-                    # gives leeway if the start isn't exactly inline
-                    # as long as some part of the swipe is straight it will count
-                    if (abs(datapoints[i][0][1] - datapoints[i+4][0][1]) > 50
-                        or abs(datapoints[i][1][1] - datapoints[i+4][1][1]) > 50
-                        or abs(datapoints[i][2][1] - datapoints[i+4][2][1]) > 50):
-                        swipe = False
-                        break
-                if swipe is True:
-                    print(len(datapoints))
-                    if left:
-                        print('valid left swipe')
-                    else:
-                        print('valid right swipe')
-                datapoints.clear()
-            else:
-                # clear list for new swipe if invalid
-                datapoints.clear()
+            datapoints.clear()
     
         # Popup window
         cv.imshow('Hand Gesture Recognition', debug_image)
