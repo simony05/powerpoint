@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import csv
 import copy
 import argparse
@@ -15,13 +13,15 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 
+import pyautogui
 
 def get_args():
+    screenWidth, screenHeight = pyautogui.size()
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--device", type=int, default=0)
-    parser.add_argument("--width", help='cap width', type=int, default=960)
-    parser.add_argument("--height", help='cap height', type=int, default=540)
+    parser.add_argument("--width", help='cap width', type=int, default=screenWidth)
+    parser.add_argument("--height", help='cap height', type=int, default=screenHeight)
 
     parser.add_argument('--use_static_image_mode', action='store_true')
     parser.add_argument("--min_detection_confidence",
@@ -166,10 +166,16 @@ def main():
                 
                 pointer = keypoint_classifier_labels[hand_sign_id]
                 moving = point_history_classifier_labels[most_common_fg_id[0][0]]
+
+                # coordinate positions
+                wrist1 = landmark_list[0]
+                index1 = landmark_list[8]
+                middle1 = landmark_list[12]
+
+                if (pointer == 'Pointer'):
+                    pyautogui.moveTo(index1[0], index1[1])
+
                 if (pointer == 'Pointer' and moving == 'Move'):
-                    wrist1 = landmark_list[0]
-                    index1 = landmark_list[8]
-                    middle1 = landmark_list[12]
                     datapoints.append([wrist1, index1, middle1])
 
                 # when swipe is done (no longer pointer and moving)
