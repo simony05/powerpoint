@@ -8,7 +8,7 @@ export default function IndexPage() {
       <div>
         <h1> hi {data.user.name}</h1>
         <img src={data.user.image} alt={data.user.name + ' photo'} />
-        <button onClick={signOut}>sign out</button>
+        <button onClick={signOut}>Sign Out</button>
       </div>
     );
   }
